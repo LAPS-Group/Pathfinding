@@ -14,7 +14,6 @@ class Runner:
         self.register_module()
 
         self.job_key = "laps.runner.{0}:{1}.work".format(self.name, self.version)
-        print("fagg ")
         #logging.info("Job key is", self.job_key)
 
         #logging.info("Registered as", self.name, "version", self.version)
