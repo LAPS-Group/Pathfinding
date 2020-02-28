@@ -3,6 +3,9 @@ import json
 import threading
 import logging
 
+class RunnerException(Exception):
+    pass
+
 class Runner:
     def __init__(self, name, version, redis_instance):
         self.name = name
@@ -28,19 +31,24 @@ class Runner:
             json.dumps(self.ident)
         )
 
-    # Register a module with redis
+    # Register a module with Redis, can throw an error
     def register_module(self):
-        ident = {
-            "name": self.name,
-            "version": self.version
-        }
-        dump = json.dumps(ident)
-
+        # For checking if a module exists, it has to be serialized in the exact same
+        # way as the backend does it, with the same spacing and all.
+        # There's no good way to do this, so we have to use a format string like this.
+        # This might break when changing stuff in the backend.
+        ident = "{{\"name\": \"{0}\", \"version\": \"{1}\"}}".format(self.name, self.version)
         self.ident = ident
+
+        # Prod the registered_modules set to determine if we are already registered
+        key = self.create_backend_redis_key("registered_modules")
+        if self.redis_instance.sismember(key, ident):
+            # We already exist, throw an error
+            raise RunnerException("Already have registered a module {0} v{1}".format(self.name, self.version))
 
         self.redis_instance.rpush(
             self.create_backend_redis_key("register-module"),
-            dump
+            ident
         )
 
     # Main module loop
