@@ -67,9 +67,7 @@ class Runner:
         def signal_handler(sig, frame):
             print("Shutdown signal received, shutting down")
 
-            # HACK: call __exit__, but only if we are waiting for a job right now.
             if blocking:
-                self.__exit__(0, 0, 0)
                 sys.exit(0)
             else:
                 # otherwise, set running to False and exit the loop on the next iteration
