@@ -4,6 +4,7 @@ import threading
 import logging
 import signal, sys
 import time
+from datetime import datetime
 
 # Use a global variable to keep track of whether we're running or not.
 # This is required in order to handle the signals properly.
@@ -80,17 +81,24 @@ class Runner:
             # Redispy returns the key which was popped in addition to the value
             response = self.redis_instance.blpop(self.job_key, 0)
             blocking = False
+            should_run = True
 
             (_, response) = response
             value = json.loads(response)
             job_id = value["job_id"]
-            (should_run, response) = handler(self, value)
+            try:
+                (should_run, response) = handler(self, value)
+            except Exception as exp:
+                message = "Handler failed: type: {0} contents: {1}".format(type(exp), exp)
+                print(message)
+                self.send_error(message)
+                break
             if not should_run:
                 g_running = False
 
             # Push module result to redis
             response["job_id"] = job_id
-            self.redis_instance.rpush(
+            self.redis_instance.lpush(
                 self.create_backend_redis_key("path-results"),
                 json.dumps(response)
             )
@@ -104,7 +112,14 @@ class Runner:
 
     # Return a runtime error in the module
     def send_error(self, message, metadata=None):
-        error = {"message": message}
+        error = {
+            "message": message,
+            "module": {
+                "name": self.name,
+                "version": self.version
+            },
+            "instant": datetime.utcnow()
+        }
         if not metadata is None:
             error["metadata"] = metadata
 
