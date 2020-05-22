@@ -7,6 +7,7 @@ Machine learning is hopefully a solution to this problem, with our main goals be
 Each module has its own directory, with version directories inside. The modules are:
 * **Dijkstra** - A Dijkstra implementation, which does not take turn-radius into account. Used for comparison and data generation.
 * **DeepStar** - Convolutional Neural Network approach to pathfinding.
+* **GraphStar** - A Graph Neural Network based approach to pathfinding
 * **Ariel** - Reinforced Learning approach (hence the name, RL - Ariel).
 
 ## Built With
